@@ -17,7 +17,9 @@ model User {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  memberships OrganizationMember[]
+  memberships      OrganizationMember[]
+  assignedPatients Patient[]            @relation("PatientAssignedTo")
+  patientProfiles  Patient[]            @relation("PatientPortalUser")
 
   @@map("users")
 }
@@ -53,6 +55,8 @@ model Organization {
   foods          Food[]
   foodMeasures   FoodMeasure[]
   recipes        Recipe[]
+  patients       Patient[]
+  attachments    Attachment[]
 
   @@map("organizations")
 }
@@ -366,4 +370,74 @@ model RecipeIngredient {
   @@index([recipeId])
   @@index([foodId])
   @@map("recipe_ingredients")
+}
+
+// ─── Pacientes e anexos (Fase 3 — docs/ARQUITETURA.md §5.2-A/F) ──────────────
+
+/// Sexo biológico — entra nas fórmulas clínicas (enum, não catálogo: §3.1)
+enum Sex {
+  male
+  female
+
+  @@map("sex")
+}
+
+model Patient {
+  id             String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  /// Profissional responsável
+  assignedToId   String?   @map("assigned_to_id") @db.Uuid
+  /// Preenchido quando o paciente ganha acesso ao portal (Fase 5)
+  userId         String?   @map("user_id") @db.Uuid
+  name           String
+  nameNormalized String    @map("name_normalized")
+  birthDate      DateTime? @map("birth_date") @db.Date
+  sex            Sex?
+  genderIdentity String?   @map("gender_identity")
+  cpf            String?
+  email          String?
+  phone          String?
+  occupation     String?
+  notes          String?
+  /// LGPD: momento do registro do consentimento de tratamento de dados
+  consentAt      DateTime? @map("consent_at") @db.Timestamptz(6)
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  assignedTo   User?        @relation("PatientAssignedTo", fields: [assignedToId], references: [id])
+  user         User?        @relation("PatientPortalUser", fields: [userId], references: [id])
+
+  @@unique([organizationId, userId])
+  @@index([organizationId, nameNormalized])
+  @@index([assignedToId])
+  @@map("patients")
+}
+
+/// Dono do anexo — polimorfismo controlado (enum: lógica ramifica por tipo)
+enum AttachmentOwner {
+  patient
+
+  @@map("attachment_owner")
+}
+
+model Attachment {
+  id             String          @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String          @map("organization_id") @db.Uuid
+  ownerType      AttachmentOwner @map("owner_type")
+  ownerId        String          @map("owner_id") @db.Uuid
+  fileName       String          @map("file_name")
+  storagePath    String          @unique @map("storage_path")
+  mimeType       String          @map("mime_type")
+  sizeBytes      Int             @map("size_bytes")
+  createdBy      String?         @map("created_by") @db.Uuid
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, ownerType, ownerId])
+  @@map("attachments")
 }

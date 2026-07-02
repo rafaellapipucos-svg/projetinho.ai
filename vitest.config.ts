@@ -5,9 +5,14 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["src/**/*.test.ts"],
+    setupFiles: ["src/test/setup.ts"],
+    testTimeout: 30_000,
   },
   resolve: {
     alias: {
+      "server-only": fileURLToPath(
+        new URL("./src/test/server-only-stub.ts", import.meta.url),
+      ),
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
   },

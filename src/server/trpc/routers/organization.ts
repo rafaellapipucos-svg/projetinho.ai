@@ -1,10 +1,16 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { router, protectedProcedure } from "@/server/trpc/trpc";
+import { router, protectedProcedure, orgProcedure } from "@/server/trpc/trpc";
 import { organizationService } from "@/server/services/organization-service";
 import { messages } from "@/messages/pt-br";
 
 export const organizationRouter = router({
+  current: orgProcedure.query(({ ctx }) => ({
+    id: ctx.membership.organizationId,
+    name: ctx.membership.organizationName,
+    slug: ctx.membership.organizationSlug,
+    roleKey: ctx.membership.roleKey,
+  })),
   create: protectedProcedure
     .input(
       z.object({
