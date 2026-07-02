@@ -2,12 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Salad, Settings } from "lucide-react";
+import {
+  Apple,
+  CookingPot,
+  LayoutDashboard,
+  Salad,
+  Settings,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { messages } from "@/messages/pt-br";
 
 const navItems = [
   { href: "/dashboard", label: messages.nav.dashboard, icon: LayoutDashboard },
+  { href: "/alimentos", label: messages.nav.foods, icon: Apple },
+  { href: "/receitas", label: messages.nav.recipes, icon: CookingPot },
   { href: "/configuracoes", label: messages.nav.settings, icon: Settings },
 ] as const;
 

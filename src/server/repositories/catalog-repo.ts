@@ -101,6 +101,9 @@ export const catalogRepo = {
   listMeasurementUnits(db: Db) {
     return db.measurementUnit.findMany({ orderBy: { sortOrder: "asc" } });
   },
+  findMeasurementUnitsByIds(db: Db, ids: string[]) {
+    return db.measurementUnit.findMany({ where: { id: { in: ids } } });
+  },
   listCalculationMethods(db: Db) {
     return db.calculationMethod.findMany({
       orderBy: [{ kind: "asc" }, { sortOrder: "asc" }],

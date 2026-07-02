@@ -15,9 +15,10 @@ import { bodyCompositionMethods } from "../../src/domain/anthropometry/methods";
 const nutrientGroups = [
   { name: "Energia", sortOrder: 0 },
   { name: "Macronutrientes", sortOrder: 1 },
-  { name: "Minerais", sortOrder: 2 },
-  { name: "Vitaminas", sortOrder: 3 },
-  { name: "Outros componentes", sortOrder: 4 },
+  { name: "Lipídios", sortOrder: 2 },
+  { name: "Minerais", sortOrder: 3 },
+  { name: "Vitaminas", sortOrder: 4 },
+  { name: "Outros componentes", sortOrder: 5 },
 ];
 
 const nutrients: Array<{
@@ -237,7 +238,31 @@ const nutrients: Array<{
     key: "cholesterol_mg",
     name: "Colesterol",
     unit: "mg",
-    group: "Outros componentes",
+    group: "Lipídios",
+    decimals: 1,
+    sortOrder: 3,
+  },
+  {
+    key: "saturated_g",
+    name: "Gorduras saturadas",
+    unit: "g",
+    group: "Lipídios",
+    decimals: 1,
+    sortOrder: 0,
+  },
+  {
+    key: "monounsaturated_g",
+    name: "Gorduras monoinsaturadas",
+    unit: "g",
+    group: "Lipídios",
+    decimals: 1,
+    sortOrder: 1,
+  },
+  {
+    key: "polyunsaturated_g",
+    name: "Gorduras poli-insaturadas",
+    unit: "g",
+    group: "Lipídios",
     decimals: 1,
     sortOrder: 2,
   },

@@ -18,6 +18,7 @@
     "test:e2e": "playwright test",
     "db:migrate": "prisma migrate deploy",
     "db:seed": "prisma db seed",
+    "import:taco": "tsx scripts/import/taco.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
