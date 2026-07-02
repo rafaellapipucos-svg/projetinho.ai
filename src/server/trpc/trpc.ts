@@ -3,6 +3,8 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 import { getTenantContext } from "@/server/auth/tenant-context";
+import { ConflictError, NotFoundError } from "@/server/errors";
+import { DomainError } from "@/domain/shared/errors";
 import { messages } from "@/messages/pt-br";
 
 export async function createTRPCContext() {
@@ -26,10 +28,29 @@ const t = initTRPC.context<Context>().create({
 });
 
 export const router = t.router;
-export const publicProcedure = t.procedure;
+
+/** Converte erros semânticos das camadas internas em códigos tRPC. */
+const mapDomainErrors = t.middleware(async ({ next }) => {
+  try {
+    return await next();
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      throw new TRPCError({ code: "NOT_FOUND", message: error.message });
+    }
+    if (error instanceof ConflictError) {
+      throw new TRPCError({ code: "CONFLICT", message: error.message });
+    }
+    if (error instanceof DomainError) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: error.message });
+    }
+    throw error;
+  }
+});
+
+export const publicProcedure = t.procedure.use(mapDomainErrors);
 
 /** Exige sessão válida; o contexto passa a ter `tenant` não-nulo. */
-export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
+export const protectedProcedure = publicProcedure.use(({ ctx, next }) => {
   if (!ctx.tenant) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
@@ -37,4 +58,15 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     });
   }
   return next({ ctx: { ...ctx, tenant: ctx.tenant } });
+});
+
+/** Exige participação ativa em uma clínica; expõe `membership` tipado. */
+export const orgProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (!ctx.tenant.membership) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: messages.errors.noOrganization,
+    });
+  }
+  return next({ ctx: { ...ctx, membership: ctx.tenant.membership } });
 });

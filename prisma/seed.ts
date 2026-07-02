@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
+import { seedCatalogs } from "./seeds/catalogs";
 
 /** Papéis de sistema (catálogo `roles`) — seed idempotente. */
 const systemRoles = [
@@ -29,8 +30,10 @@ async function main() {
       });
     }
     console.info(
-      `Seed concluído: ${systemRoles.length} papéis de sistema garantidos.`,
+      `Seed de papéis: ${systemRoles.length} papéis de sistema garantidos.`,
     );
+
+    await seedCatalogs(prisma);
   } finally {
     await prisma.$disconnect();
   }

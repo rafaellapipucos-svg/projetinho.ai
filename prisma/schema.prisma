@@ -46,7 +46,10 @@ model Organization {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  members OrganizationMember[]
+  members        OrganizationMember[]
+  foodCategories FoodCategory[]
+  mealTypes      MealType[]
+  examTypes      ExamType[]
 
   @@map("organizations")
 }
@@ -76,4 +79,163 @@ model OrganizationMember {
   @@index([userId])
   @@index([roleId])
   @@map("organization_members")
+}
+
+// ─── Catálogos globais (Regra Enum vs Catálogo — docs/ARQUITETURA.md §3.1) ───
+
+model NutrientGroup {
+  id        String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  name      String   @unique
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  nutrients Nutrient[]
+
+  @@map("nutrient_groups")
+}
+
+model Nutrient {
+  id              String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  key             String   @unique
+  name            String
+  unit            String
+  nutrientGroupId String   @map("nutrient_group_id") @db.Uuid
+  decimals        Int      @default(2)
+  isCore          Boolean  @default(false) @map("is_core")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  nutrientGroup NutrientGroup @relation(fields: [nutrientGroupId], references: [id])
+
+  @@index([nutrientGroupId])
+  @@map("nutrients")
+}
+
+enum UnitType {
+  mass
+  volume
+  unit
+
+  @@map("unit_type")
+}
+
+model MeasurementUnit {
+  id           String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  key          String   @unique
+  name         String
+  abbreviation String
+  type         UnitType
+  gramsPerUnit Decimal? @map("grams_per_unit") @db.Decimal(12, 4)
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("measurement_units")
+}
+
+model FoodCategory {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String
+  color          String?
+  sortOrder      Int      @default(0) @map("sort_order")
+  isSystem       Boolean  @default(false) @map("is_system")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, name])
+  @@map("food_categories")
+}
+
+model FoodSource {
+  id          String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  key         String   @unique
+  name        String
+  version     String?
+  licenseNote String?  @map("license_note")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("food_sources")
+}
+
+model MealType {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String
+  defaultTime    String?  @map("default_time")
+  sortOrder      Int      @default(0) @map("sort_order")
+  isSystem       Boolean  @default(false) @map("is_system")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, name])
+  @@map("meal_types")
+}
+
+enum CalculationKind {
+  energy_expenditure
+  body_composition
+  activity_factor
+
+  @@map("calculation_kind")
+}
+
+model CalculationMethod {
+  id          String          @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  key         String          @unique
+  kind        CalculationKind
+  name        String
+  description String?
+  params      Json            @default("{}")
+  sortOrder   Int             @default(0) @map("sort_order")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("calculation_methods")
+}
+
+enum MeasurementGroup {
+  basic
+  skinfold
+  circumference
+  bioimpedance
+
+  @@map("measurement_group")
+}
+
+model MeasurementType {
+  id        String           @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  key       String           @unique
+  name      String
+  unit      String
+  group     MeasurementGroup
+  sortOrder Int              @default(0) @map("sort_order")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("measurement_types")
+}
+
+model ExamType {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String
+  unit           String?
+  referenceRange Json     @default("{}") @map("reference_range")
+  isSystem       Boolean  @default(false) @map("is_system")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+
+  @@unique([organizationId, name])
+  @@map("exam_types")
 }

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Salad } from "lucide-react";
+import { LayoutDashboard, Salad, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { messages } from "@/messages/pt-br";
 
 const navItems = [
   { href: "/dashboard", label: messages.nav.dashboard, icon: LayoutDashboard },
+  { href: "/configuracoes", label: messages.nav.settings, icon: Settings },
 ] as const;
 
 export function AppSidebar({
