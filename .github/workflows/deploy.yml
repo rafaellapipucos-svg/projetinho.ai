@@ -1,0 +1,73 @@
+name: Deploy staging (Cloud Run)
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+env:
+  REGION: southamerica-east1
+  IMAGE: southamerica-east1-docker.pkg.dev/projetinhoai/app/web
+
+jobs:
+  deploy:
+    name: Migrations + imagem + Cloud Run
+    # Só roda depois do bootstrap do GCP (scripts/gcp/bootstrap.sh) e das
+    # Variables GCP_* configuradas no repositório.
+    if: vars.GCP_WIF_PROVIDER != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Aplicar migrations no Supabase
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+        run: |
+          npm ci --no-audit --no-fund
+          npx prisma migrate deploy
+
+      - name: Autenticar no Google Cloud (WIF, sem chaves)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build e push da imagem
+        run: |
+          gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+          docker build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL='${{ vars.NEXT_PUBLIC_SUPABASE_URL }}' \
+            --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}' \
+            -t '${{ env.IMAGE }}:${{ github.sha }}' .
+          docker push '${{ env.IMAGE }}:${{ github.sha }}'
+
+      - name: Deploy no Cloud Run (staging)
+        run: |
+          gcloud run deploy projetinho-staging \
+            --image='${{ env.IMAGE }}:${{ github.sha }}' \
+            --region='${{ env.REGION }}' \
+            --service-account='${{ vars.GCP_RUNTIME_SA }}' \
+            --allow-unauthenticated \
+            --port=8080 \
+            --min-instances=0 \
+            --max-instances=3 \
+            --memory=512Mi \
+            --cpu=1 \
+            --set-secrets=DATABASE_URL=DATABASE_URL:latest,DIRECT_URL=DIRECT_URL:latest \
+            --set-env-vars=NEXT_PUBLIC_SUPABASE_URL='${{ vars.NEXT_PUBLIC_SUPABASE_URL }}',NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}',LOG_LEVEL=info
+
+      - name: URL do serviço
+        run: gcloud run services describe projetinho-staging --region='${{ env.REGION }}' --format='value(status.url)'
