@@ -6,12 +6,15 @@ import { MealTypesTab } from "./meal-types-tab";
 import { FoodCategoriesTab } from "./food-categories-tab";
 import { ExamTypesTab } from "./exam-types-tab";
 import { AnamnesisTemplatesTab } from "./anamnesis-templates-tab";
+import { ServicesTab } from "./services-tab";
+import { DocumentTemplatesTab } from "./document-templates-tab";
+import { EquivalenceTab } from "./equivalence-tab";
 import { SystemTab } from "./system-tab";
 
 export function ConfigTabs() {
   return (
     <Tabs defaultValue="mealTypes">
-      <TabsList>
+      <TabsList className="flex-wrap">
         <TabsTrigger value="mealTypes">
           {messages.config.tabMealTypes}
         </TabsTrigger>
@@ -23,6 +26,13 @@ export function ConfigTabs() {
         </TabsTrigger>
         <TabsTrigger value="anamnesis">
           {messages.patients.tabs.anamnesis}
+        </TabsTrigger>
+        <TabsTrigger value="services">{messages.services.title}</TabsTrigger>
+        <TabsTrigger value="documents">
+          {messages.documents.templates.title}
+        </TabsTrigger>
+        <TabsTrigger value="equivalence">
+          {messages.equivalence.title}
         </TabsTrigger>
         <TabsTrigger value="system">{messages.config.tabSystem}</TabsTrigger>
       </TabsList>
@@ -37,6 +47,15 @@ export function ConfigTabs() {
       </TabsContent>
       <TabsContent value="anamnesis">
         <AnamnesisTemplatesTab />
+      </TabsContent>
+      <TabsContent value="services">
+        <ServicesTab />
+      </TabsContent>
+      <TabsContent value="documents">
+        <DocumentTemplatesTab />
+      </TabsContent>
+      <TabsContent value="equivalence">
+        <EquivalenceTab />
       </TabsContent>
       <TabsContent value="system">
         <SystemTab />

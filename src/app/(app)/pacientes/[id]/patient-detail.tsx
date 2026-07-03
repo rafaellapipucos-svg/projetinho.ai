@@ -31,6 +31,8 @@ import { AssessmentsTab } from "./assessments-tab";
 import { EnergyTab } from "./energy-tab";
 import { AnamnesisTab } from "./anamnesis-tab";
 import { ExamsTab } from "./exams-tab";
+import { DocumentsTab } from "./documents-tab";
+import { MessagesTab } from "./messages-tab";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
@@ -158,6 +160,12 @@ export function PatientDetail({ patientId }: { patientId: string }) {
           <TabsTrigger value="exams">
             {messages.patients.tabs.exams}
           </TabsTrigger>
+          <TabsTrigger value="documents">
+            {messages.patients.tabs.documents}
+          </TabsTrigger>
+          <TabsTrigger value="messages">
+            {messages.patients.tabs.messages}
+          </TabsTrigger>
           <TabsTrigger value="attachments">
             {messages.patients.tabs.attachments}
           </TabsTrigger>
@@ -230,6 +238,14 @@ export function PatientDetail({ patientId }: { patientId: string }) {
 
         <TabsContent value="exams">
           <ExamsTab patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="documents">
+          <DocumentsTab patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <MessagesTab patientId={patient.id} />
         </TabsContent>
 
         <TabsContent value="attachments">

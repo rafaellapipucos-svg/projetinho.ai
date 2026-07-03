@@ -7,6 +7,8 @@ import { patientRouter } from "@/server/trpc/routers/patient";
 import { planRouter } from "@/server/trpc/routers/plan";
 import { portalRouter } from "@/server/trpc/routers/portal";
 import { clinicalRouter } from "@/server/trpc/routers/clinical";
+import { operationsRouter } from "@/server/trpc/routers/operations";
+import { equivalenceRouter } from "@/server/trpc/routers/equivalence";
 
 export const appRouter = router({
   organization: organizationRouter,
@@ -17,6 +19,8 @@ export const appRouter = router({
   plan: planRouter,
   portal: portalRouter,
   clinical: clinicalRouter,
+  operations: operationsRouter,
+  equivalence: equivalenceRouter,
 });
 
 export type AppRouter = typeof appRouter;

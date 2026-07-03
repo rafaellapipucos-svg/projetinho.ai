@@ -270,6 +270,15 @@ export function PlanBuilder({ planId }: { planId: string }) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <a
+                  href={`/imprimir/plano/${planId}`}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {messages.planPrint.printButton}
+                </a>
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onSelect={() => {
                   setTemplateName(plan.name);

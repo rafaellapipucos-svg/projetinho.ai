@@ -20,6 +20,8 @@ model User {
   memberships      OrganizationMember[]
   assignedPatients Patient[]            @relation("PatientAssignedTo")
   patientProfiles  Patient[]            @relation("PatientPortalUser")
+  appointments     Appointment[]        @relation("AppointmentProfessional")
+  sentMessages     Message[]            @relation("MessageSender")
 
   @@map("users")
 }
@@ -64,6 +66,12 @@ model Organization {
   anamnesisTemplates AnamnesisTemplate[]
   anamnesisResponses AnamnesisResponse[]
   patientExams       PatientExam[]
+  services           Service[]
+  appointments       Appointment[]
+  documentTemplates  DocumentTemplate[]
+  documents          Document[]
+  equivalenceGroups  EquivalenceGroup[]
+  messages           Message[]
 
   @@map("organizations")
 }
@@ -150,6 +158,7 @@ model MeasurementUnit {
 
   recipeIngredients RecipeIngredient[]
   mealItems         MealItem[]
+  equivalenceItems  EquivalenceItem[]
 
   @@map("measurement_units")
 }
@@ -306,6 +315,7 @@ model Food {
   measures          FoodMeasure[]
   recipeIngredients RecipeIngredient[]
   mealItems         MealItem[]
+  equivalenceItems  EquivalenceItem[]
 
   @@unique([foodSourceId, sourceCode])
   @@index([organizationId])
@@ -434,11 +444,166 @@ model Patient {
   energyCalculations EnergyCalculation[]
   anamnesisResponses AnamnesisResponse[]
   patientExams       PatientExam[]
+  appointments       Appointment[]
+  documents          Document[]
+  messages           Message[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, nameNormalized])
   @@index([assignedToId])
   @@map("patients")
+}
+
+// ─── Operação da clínica (Fase 7 — §5.2-F) ───────────────────────────────────
+
+model Service {
+  id              String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId  String   @map("organization_id") @db.Uuid
+  name            String
+  durationMinutes Int      @map("duration_minutes")
+  priceCents      Int      @map("price_cents")
+  isActive        Boolean  @default(true) @map("is_active")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization  @relation(fields: [organizationId], references: [id])
+  appointments Appointment[]
+
+  @@unique([organizationId, name])
+  @@map("services")
+}
+
+/// Workflow da consulta — a lógica ramifica por estado (enum §3.1)
+enum AppointmentStatus {
+  scheduled
+  confirmed
+  completed
+  cancelled
+  no_show
+
+  @@map("appointment_status")
+}
+
+model Appointment {
+  id             String            @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String            @map("organization_id") @db.Uuid
+  patientId      String            @map("patient_id") @db.Uuid
+  professionalId String            @map("professional_id") @db.Uuid
+  serviceId      String?           @map("service_id") @db.Uuid
+  startsAt       DateTime          @map("starts_at") @db.Timestamptz(6)
+  endsAt         DateTime          @map("ends_at") @db.Timestamptz(6)
+  status         AppointmentStatus @default(scheduled)
+  notes          String?
+  /// Lembrete de véspera enviado (job em /api/jobs/appointment-reminders)
+  reminderSentAt DateTime?         @map("reminder_sent_at") @db.Timestamptz(6)
+  createdBy      String?           @map("created_by") @db.Uuid
+  createdAt      DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  professional User         @relation("AppointmentProfessional", fields: [professionalId], references: [id])
+  service      Service?     @relation(fields: [serviceId], references: [id])
+
+  @@index([organizationId, startsAt])
+  @@index([patientId])
+  @@map("appointments")
+}
+
+/// Modelos de documento com merge-fields ({{paciente.nome}} etc.)
+model DocumentTemplate {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String
+  body           String
+  isSystem       Boolean  @default(false) @map("is_system")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization? @relation(fields: [organizationId], references: [id])
+  documents    Document[]
+
+  @@unique([organizationId, name])
+  @@map("document_templates")
+}
+
+/// Documento emitido: body já renderizado (snapshot §3.3)
+model Document {
+  id             String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  templateId     String?   @map("template_id") @db.Uuid
+  title          String
+  body           String
+  issuedAt       DateTime  @map("issued_at") @db.Date
+  deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?   @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  patient      Patient           @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  template     DocumentTemplate? @relation(fields: [templateId], references: [id])
+
+  @@index([patientId, issuedAt])
+  @@map("documents")
+}
+
+/// Listas de substituição: alimentos equivalentes com suas quantidades
+model EquivalenceGroup {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String?  @map("organization_id") @db.Uuid
+  name           String
+  isSystem       Boolean  @default(false) @map("is_system")
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization?     @relation(fields: [organizationId], references: [id])
+  items        EquivalenceItem[]
+
+  @@unique([organizationId, name])
+  @@map("equivalence_groups")
+}
+
+model EquivalenceItem {
+  id                 String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  equivalenceGroupId String   @map("equivalence_group_id") @db.Uuid
+  foodId             String   @map("food_id") @db.Uuid
+  quantity           Decimal  @db.Decimal(10, 2)
+  measurementUnitId  String?  @map("measurement_unit_id") @db.Uuid
+  foodMeasureId      String?  @map("food_measure_id") @db.Uuid
+  resolvedGrams      Decimal  @map("resolved_grams") @db.Decimal(10, 2)
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  group           EquivalenceGroup @relation(fields: [equivalenceGroupId], references: [id], onDelete: Cascade)
+  food            Food             @relation(fields: [foodId], references: [id])
+  measurementUnit MeasurementUnit? @relation(fields: [measurementUnitId], references: [id])
+
+  @@index([equivalenceGroupId])
+  @@map("equivalence_items")
+}
+
+/// Chat clínica ↔ paciente (remetente pode ser profissional ou paciente)
+model Message {
+  id             String    @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  patientId      String    @map("patient_id") @db.Uuid
+  senderId       String    @map("sender_id") @db.Uuid
+  body           String
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id])
+
+  @@index([patientId, createdAt])
+  @@map("messages")
 }
 
 // ─── Ferramentas clínicas (Fase 6 — §5.2-E) — sempre com snapshot ────────────
