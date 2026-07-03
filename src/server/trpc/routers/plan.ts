@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { router, orgProcedure } from "@/server/trpc/trpc";
 import { planService } from "@/server/services/plan-service";
 import {
@@ -9,6 +10,17 @@ import {
 import { idParam } from "@/lib/schemas/catalog";
 
 export const planRouter = router({
+  applyEnergyTarget: orgProcedure
+    .input(
+      z.object({ planId: z.uuid(), kcal: z.number().min(500).max(10_000) }),
+    )
+    .mutation(({ ctx, input }) =>
+      planService.applyEnergyTarget(
+        ctx.membership.organizationId,
+        input.planId,
+        input.kcal,
+      ),
+    ),
   create: orgProcedure
     .input(planCreateInput)
     .mutation(({ ctx, input }) =>

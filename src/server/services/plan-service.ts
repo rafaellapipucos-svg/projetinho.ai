@@ -821,6 +821,30 @@ export const planService = {
     });
   },
 
+  /** Define a meta diária de energia a partir de um cálculo de GET (Fase 6). */
+  async applyEnergyTarget(
+    organizationId: string,
+    planId: string,
+    kcal: number,
+  ) {
+    return prisma.$transaction(async (tx) => {
+      const plan = await planRepo.findForOrg(tx, organizationId, planId);
+      if (!plan) throw new NotFoundError(messages.errors.notFound);
+      if (plan.status === "archived") {
+        throw new ConflictError(messages.plans.archivedReadOnly);
+      }
+      const nutrient = await catalogRepo.findNutrientByKey(tx, "energy_kcal");
+      if (!nutrient) throw new NotFoundError(messages.errors.notFound);
+      await planRepo.upsertTarget(tx, planId, nutrient.id, {
+        targetMin: kcal,
+        targetMax: kcal,
+      });
+      const version = plan.version + 1;
+      await planRepo.setVersion(tx, planId, version);
+      return { version };
+    });
+  },
+
   async removeDraft(organizationId: string, planId: string) {
     const result = await planRepo.deleteDraft(prisma, organizationId, planId);
     if (result.count === 0) throw new NotFoundError(messages.errors.notFound);

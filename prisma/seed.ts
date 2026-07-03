@@ -2,6 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { seedCatalogs } from "./seeds/catalogs";
+import { seedAnamnesis } from "./seeds/anamnesis";
 
 /** Papéis de sistema (catálogo `roles`) — seed idempotente. */
 const systemRoles = [
@@ -34,6 +35,7 @@ async function main() {
     );
 
     await seedCatalogs(prisma);
+    await seedAnamnesis(prisma);
   } finally {
     await prisma.$disconnect();
   }

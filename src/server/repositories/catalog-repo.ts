@@ -107,6 +107,9 @@ export const catalogRepo = {
   findNutrientsByIds(db: Db, ids: string[]) {
     return db.nutrient.findMany({ where: { id: { in: ids } } });
   },
+  findNutrientByKey(db: Db, key: string) {
+    return db.nutrient.findUnique({ where: { key } });
+  },
   listCalculationMethods(db: Db) {
     return db.calculationMethod.findMany({
       orderBy: [{ kind: "asc" }, { sortOrder: "asc" }],

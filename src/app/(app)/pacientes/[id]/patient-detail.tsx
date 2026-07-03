@@ -27,6 +27,10 @@ import { PatientFormDialog } from "../patient-form-dialog";
 import { AttachmentsTab } from "./attachments-tab";
 import { PlansTab } from "./plans-tab";
 import { PortalAccessCard } from "./portal-access-card";
+import { AssessmentsTab } from "./assessments-tab";
+import { EnergyTab } from "./energy-tab";
+import { AnamnesisTab } from "./anamnesis-tab";
+import { ExamsTab } from "./exams-tab";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
@@ -142,6 +146,18 @@ export function PatientDetail({ patientId }: { patientId: string }) {
           <TabsTrigger value="plans">
             {messages.patients.tabs.plans}
           </TabsTrigger>
+          <TabsTrigger value="assessments">
+            {messages.patients.tabs.assessments}
+          </TabsTrigger>
+          <TabsTrigger value="energy">
+            {messages.patients.tabs.energy}
+          </TabsTrigger>
+          <TabsTrigger value="anamnesis">
+            {messages.patients.tabs.anamnesis}
+          </TabsTrigger>
+          <TabsTrigger value="exams">
+            {messages.patients.tabs.exams}
+          </TabsTrigger>
           <TabsTrigger value="attachments">
             {messages.patients.tabs.attachments}
           </TabsTrigger>
@@ -198,6 +214,22 @@ export function PatientDetail({ patientId }: { patientId: string }) {
 
         <TabsContent value="plans">
           <PlansTab patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="assessments">
+          <AssessmentsTab patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="energy">
+          <EnergyTab patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="anamnesis">
+          <AnamnesisTab patientId={patient.id} />
+        </TabsContent>
+
+        <TabsContent value="exams">
+          <ExamsTab patientId={patient.id} />
         </TabsContent>
 
         <TabsContent value="attachments">

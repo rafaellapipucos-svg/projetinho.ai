@@ -5,6 +5,7 @@ import { messages } from "@/messages/pt-br";
 import { MealTypesTab } from "./meal-types-tab";
 import { FoodCategoriesTab } from "./food-categories-tab";
 import { ExamTypesTab } from "./exam-types-tab";
+import { AnamnesisTemplatesTab } from "./anamnesis-templates-tab";
 import { SystemTab } from "./system-tab";
 
 export function ConfigTabs() {
@@ -20,6 +21,9 @@ export function ConfigTabs() {
         <TabsTrigger value="examTypes">
           {messages.config.tabExamTypes}
         </TabsTrigger>
+        <TabsTrigger value="anamnesis">
+          {messages.patients.tabs.anamnesis}
+        </TabsTrigger>
         <TabsTrigger value="system">{messages.config.tabSystem}</TabsTrigger>
       </TabsList>
       <TabsContent value="mealTypes">
@@ -30,6 +34,9 @@ export function ConfigTabs() {
       </TabsContent>
       <TabsContent value="examTypes">
         <ExamTypesTab />
+      </TabsContent>
+      <TabsContent value="anamnesis">
+        <AnamnesisTemplatesTab />
       </TabsContent>
       <TabsContent value="system">
         <SystemTab />
