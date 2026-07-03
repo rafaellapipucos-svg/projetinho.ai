@@ -15,8 +15,10 @@ export const userRepo = {
 
   /**
    * Garante a existência do espelho em public.users para um usuário do
-   * Supabase Auth. O caminho normal é o trigger `on_auth_user_created`;
-   * este fallback cobre corrida com o trigger e contas criadas antes dele.
+   * Supabase Auth, criando-o na primeira requisição autenticada. Este é o
+   * caminho oficial do espelho (não há trigger em auth.users — ele fazia o
+   * signup falhar; ver migration 20260703120000_remove_auth_trigger).
+   * O tratamento de P2002 cobre corrida entre requisições concorrentes.
    */
   async ensureMirror(db: Db, input: EnsureUserMirrorInput) {
     const existing = await db.user.findUnique({
