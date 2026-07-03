@@ -15,6 +15,13 @@ export default async function proxy(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
   const { pathname } = request.nextUrl;
 
+  // Rotas de API têm autorização própria (tRPC no contexto, jobs por OIDC,
+  // export pelo tenant). Renovamos a sessão, mas nunca redirecionamos —
+  // um 307 quebraria o cliente tRPC, os jobs do Scheduler e o healthcheck.
+  if (pathname.startsWith("/api")) {
+    return supabaseResponse;
+  }
+
   const redirectTo = (path: string) => {
     const url = request.nextUrl.clone();
     url.pathname = path;

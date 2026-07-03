@@ -18,6 +18,14 @@ test("rota protegida sem sessão volta para /login", async ({ page }) => {
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("healthcheck responde 200 sem redirecionar (rota de API)", async ({
+  request,
+}) => {
+  const response = await request.get("/api/health", { maxRedirects: 0 });
+  expect(response.status()).toBe(200);
+  expect(await response.json()).toEqual({ status: "ok" });
+});
+
 test("manifest da PWA responde com nome e ícone", async ({ request }) => {
   const response = await request.get("/manifest.webmanifest");
   expect(response.ok()).toBe(true);
