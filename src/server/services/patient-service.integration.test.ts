@@ -8,7 +8,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * Roda apenas onde há credenciais (local); o CI de qualidade não tem
  * segredos de banco e pula a suíte inteira.
  */
-const hasDatabase = Boolean(process.env.DIRECT_URL ?? process.env.DATABASE_URL);
+// Gate por DIRECT_URL (só o .env local o define). O CI de qualidade injeta
+// um DATABASE_URL sintético para o build, mas nunca DIRECT_URL — então a
+// suíte de integração roda no local (Supabase real) e pula no CI.
+const hasDatabase = Boolean(process.env.DIRECT_URL);
 
 describe.runIf(hasDatabase)("isolamento de tenant — pacientes", () => {
   let patientService: typeof import("./patient-service").patientService;

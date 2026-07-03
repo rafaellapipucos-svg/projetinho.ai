@@ -5,7 +5,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * Convite → vínculo → diário, com o token consumido no primeiro uso e
  * revogação limpando o acesso — services de produção contra o banco real.
  */
-const hasDatabase = Boolean(process.env.DIRECT_URL ?? process.env.DATABASE_URL);
+// Gate por DIRECT_URL (só o .env local o define). O CI de qualidade injeta
+// um DATABASE_URL sintético para o build, mas nunca DIRECT_URL — então a
+// suíte de integração roda no local (Supabase real) e pula no CI.
+const hasDatabase = Boolean(process.env.DIRECT_URL);
 
 describe.runIf(hasDatabase)("portal do paciente — convite e isolamento", () => {
   let prisma: typeof import("../db").prisma;

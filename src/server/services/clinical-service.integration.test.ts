@@ -5,7 +5,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * são IMUTÁVEIS — alterar coeficientes do catálogo ou o texto de perguntas
  * do modelo não reescreve registros históricos (Regra do Snapshot §3.3).
  */
-const hasDatabase = Boolean(process.env.DIRECT_URL ?? process.env.DATABASE_URL);
+// Gate por DIRECT_URL (só o .env local o define). O CI de qualidade injeta
+// um DATABASE_URL sintético para o build, mas nunca DIRECT_URL — então a
+// suíte de integração roda no local (Supabase real) e pula no CI.
+const hasDatabase = Boolean(process.env.DIRECT_URL);
 
 describe.runIf(hasDatabase)("ferramentas clínicas — cálculo e snapshot", () => {
   let prisma: typeof import("../db").prisma;
