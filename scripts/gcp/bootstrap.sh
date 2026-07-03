@@ -91,6 +91,28 @@ read -r -s -p "DIRECT_URL (pooler 5432): " DIRECT_URL_VALUE; echo
 create_or_update_secret "DATABASE_URL" "${DATABASE_URL_VALUE}"
 create_or_update_secret "DIRECT_URL" "${DIRECT_URL_VALUE}"
 
+echo "▶ Cloud Scheduler: lembretes de consulta (diário, 08:00 BRT)…"
+gcloud services enable cloudscheduler.googleapis.com >/dev/null 2>&1 || true
+SERVICE_URL="$(gcloud run services describe projetinho-staging --region="${REGION}" --format='value(status.url)' 2>/dev/null || true)"
+if [ -n "${SERVICE_URL}" ]; then
+  REMINDER_URL="${SERVICE_URL}/api/jobs/appointment-reminders"
+  if gcloud scheduler jobs describe appointment-reminders --location="${REGION}" >/dev/null 2>&1; then
+    gcloud scheduler jobs update http appointment-reminders --location="${REGION}" \
+      --uri="${REMINDER_URL}" --http-method=POST \
+      --oidc-service-account-email="${DEPLOY_SA}@${PROJECT_ID}.iam.gserviceaccount.com" \
+      --oidc-token-audience="${REMINDER_URL}"
+  else
+    gcloud scheduler jobs create http appointment-reminders --location="${REGION}" \
+      --schedule="0 8 * * *" --time-zone="America/Sao_Paulo" \
+      --uri="${REMINDER_URL}" --http-method=POST \
+      --oidc-service-account-email="${DEPLOY_SA}@${PROJECT_ID}.iam.gserviceaccount.com" \
+      --oidc-token-audience="${REMINDER_URL}"
+  fi
+  echo "  Lembretes agendados. Defina JOBS_OIDC_AUDIENCE=${REMINDER_URL} no Cloud Run."
+else
+  echo "  Serviço ainda não existe — rode este script de novo após o 1º deploy."
+fi
+
 echo
 echo "════════════════════════════════════════════════════════════════════════"
 echo "✔ Bootstrap concluído. Configure estas 3 Variables no repositório GitHub"

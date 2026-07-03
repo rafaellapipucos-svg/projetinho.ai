@@ -11,6 +11,7 @@ import {
   Salad,
   Settings,
   Users,
+  Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { messages } from "@/messages/pt-br";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/dashboard", label: messages.nav.dashboard, icon: LayoutDashboard },
   { href: "/agenda", label: messages.nav.agenda, icon: CalendarDays },
   { href: "/pacientes", label: messages.nav.patients, icon: Users },
+  { href: "/financeiro", label: messages.nav.finance, icon: Wallet },
   { href: "/planos", label: messages.nav.planTemplates, icon: ClipboardList },
   { href: "/alimentos", label: messages.nav.foods, icon: Apple },
   { href: "/receitas", label: messages.nav.recipes, icon: CookingPot },

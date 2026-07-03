@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { Copy, Link2, ShieldOff } from "lucide-react";
+import { Copy, Download, Link2, ShieldOff } from "lucide-react";
 import { api } from "@/app/_trpc/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,6 +104,18 @@ export function PortalAccessCard({
             </Button>
           </div>
         )}
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3">
+          <p className="text-muted-foreground">
+            {messages.lgpd.exportDescription}
+          </p>
+          <Button variant="outline" size="sm" asChild>
+            <a href={`/api/pacientes/${patientId}/exportar`} download>
+              <Download className="size-4" aria-hidden />
+              {messages.lgpd.exportButton}
+            </a>
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

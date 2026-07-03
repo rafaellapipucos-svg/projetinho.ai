@@ -22,6 +22,7 @@ model User {
   patientProfiles  Patient[]            @relation("PatientPortalUser")
   appointments     Appointment[]        @relation("AppointmentProfessional")
   sentMessages     Message[]            @relation("MessageSender")
+  auditLogs        AuditLog[]           @relation("AuditLogUser")
 
   @@map("users")
 }
@@ -72,6 +73,8 @@ model Organization {
   documents          Document[]
   equivalenceGroups  EquivalenceGroup[]
   messages           Message[]
+  payments           Payment[]
+  auditLogs          AuditLog[]
 
   @@map("organizations")
 }
@@ -447,11 +450,66 @@ model Patient {
   appointments       Appointment[]
   documents          Document[]
   messages           Message[]
+  payments           Payment[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, nameNormalized])
   @@index([assignedToId])
   @@map("patients")
+}
+
+// ─── Financeiro do consultório (Fase 8 — §5.2-F, SEM billing de plataforma) ──
+
+/// Situação do pagamento — a lógica ramifica por estado (enum §3.1)
+enum PaymentStatus {
+  pending
+  paid
+  cancelled
+
+  @@map("payment_status")
+}
+
+model Payment {
+  id             String        @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String        @map("organization_id") @db.Uuid
+  patientId      String        @map("patient_id") @db.Uuid
+  appointmentId  String?       @map("appointment_id") @db.Uuid
+  description    String
+  amountCents    Int           @map("amount_cents")
+  method         String?
+  status         PaymentStatus @default(pending)
+  dueAt          DateTime?     @map("due_at") @db.Date
+  paidAt         DateTime?     @map("paid_at") @db.Date
+  deletedAt      DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdBy      String?       @map("created_by") @db.Uuid
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  appointment  Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@index([organizationId, status])
+  @@index([patientId])
+  @@map("payments")
+}
+
+/// Trilha de auditoria de mutações clínicas/sensíveis (§8)
+model AuditLog {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  userId         String?  @map("user_id") @db.Uuid
+  action         String
+  entity         String
+  entityId       String?  @map("entity_id") @db.Uuid
+  diff           Json?
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation("AuditLogUser", fields: [userId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("audit_logs")
 }
 
 // ─── Operação da clínica (Fase 7 — §5.2-F) ───────────────────────────────────
@@ -504,6 +562,7 @@ model Appointment {
   patient      Patient      @relation(fields: [patientId], references: [id])
   professional User         @relation("AppointmentProfessional", fields: [professionalId], references: [id])
   service      Service?     @relation(fields: [serviceId], references: [id])
+  payments     Payment[]
 
   @@index([organizationId, startsAt])
   @@index([patientId])
