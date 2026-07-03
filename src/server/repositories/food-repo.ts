@@ -152,4 +152,21 @@ export const foodRepo = {
       include: { nutrients: { include: { nutrient: true } } },
     });
   },
+
+  findVisibleByIdsWithMeasures(db: Db, organizationId: string, ids: string[]) {
+    return db.food.findMany({
+      where: {
+        id: { in: ids },
+        isActive: true,
+        OR: [{ organizationId: null }, { organizationId }],
+      },
+      include: {
+        nutrients: { include: { nutrient: true } },
+        measures: {
+          where: { OR: [{ organizationId: null }, { organizationId }] },
+          orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+        },
+      },
+    });
+  },
 };

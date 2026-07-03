@@ -57,6 +57,7 @@ model Organization {
   recipes        Recipe[]
   patients       Patient[]
   attachments    Attachment[]
+  mealPlans      MealPlan[]
 
   @@map("organizations")
 }
@@ -114,8 +115,9 @@ model Nutrient {
   createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  nutrientGroup NutrientGroup @relation(fields: [nutrientGroupId], references: [id])
-  foodNutrients FoodNutrient[]
+  nutrientGroup       NutrientGroup        @relation(fields: [nutrientGroupId], references: [id])
+  foodNutrients       FoodNutrient[]
+  planNutrientTargets PlanNutrientTarget[]
 
   @@index([nutrientGroupId])
   @@map("nutrients")
@@ -141,6 +143,7 @@ model MeasurementUnit {
   updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   recipeIngredients RecipeIngredient[]
+  mealItems         MealItem[]
 
   @@map("measurement_units")
 }
@@ -187,6 +190,7 @@ model MealType {
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   organization Organization? @relation(fields: [organizationId], references: [id])
+  planMeals    PlanMeal[]
 
   @@unique([organizationId, name])
   @@map("meal_types")
@@ -290,6 +294,7 @@ model Food {
   nutrients         FoodNutrient[]
   measures          FoodMeasure[]
   recipeIngredients RecipeIngredient[]
+  mealItems         MealItem[]
 
   @@unique([foodSourceId, sourceCode])
   @@index([organizationId])
@@ -345,6 +350,7 @@ model Recipe {
 
   organization Organization       @relation(fields: [organizationId], references: [id])
   ingredients  RecipeIngredient[]
+  mealItems    MealItem[]
 
   @@index([organizationId])
   @@map("recipes")
@@ -409,6 +415,7 @@ model Patient {
   organization Organization @relation(fields: [organizationId], references: [id])
   assignedTo   User?        @relation("PatientAssignedTo", fields: [assignedToId], references: [id])
   user         User?        @relation("PatientPortalUser", fields: [userId], references: [id])
+  mealPlans    MealPlan[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, nameNormalized])
@@ -440,4 +447,138 @@ model Attachment {
 
   @@index([organizationId, ownerType, ownerId])
   @@map("attachments")
+}
+
+// ─── Planos alimentares (Fase 4 — docs/ARQUITETURA.md §5.2-D) ────────────────
+
+/// Workflow do plano — a lógica ramifica por estado (enum, não catálogo: §3.1)
+enum PlanStatus {
+  draft
+  active
+  archived
+
+  @@map("plan_status")
+}
+
+model MealPlan {
+  id                  String     @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId      String     @map("organization_id") @db.Uuid
+  /// NULL + isTemplate = modelo reutilizável (mesma estrutura, zero duplicação)
+  patientId           String?    @map("patient_id") @db.Uuid
+  name                String
+  status              PlanStatus @default(draft)
+  isTemplate          Boolean    @default(false) @map("is_template")
+  startDate           DateTime?  @map("start_date") @db.Date
+  endDate             DateTime?  @map("end_date") @db.Date
+  notes               String?
+  /// Congelado na ativação (Regra do Snapshot §3.3): totais + metas da época
+  nutritionalSnapshot Json?      @map("nutritional_snapshot")
+  /// Lock otimista do autosave (§7.2): conflito → cliente recarrega
+  version             Int        @default(1)
+  createdBy           String?    @map("created_by") @db.Uuid
+  createdAt           DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  patient      Patient?             @relation(fields: [patientId], references: [id])
+  days         PlanDay[]
+  targets      PlanNutrientTarget[]
+
+  @@index([organizationId, status])
+  @@index([patientId])
+  @@map("meal_plans")
+}
+
+model PlanNutrientTarget {
+  id         String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  mealPlanId String   @map("meal_plan_id") @db.Uuid
+  nutrientId String   @map("nutrient_id") @db.Uuid
+  targetMin  Decimal? @map("target_min") @db.Decimal(12, 4)
+  targetMax  Decimal? @map("target_max") @db.Decimal(12, 4)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  mealPlan MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  nutrient Nutrient @relation(fields: [nutrientId], references: [id])
+
+  @@unique([mealPlanId, nutrientId])
+  @@map("plan_nutrient_targets")
+}
+
+model PlanDay {
+  id         String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  mealPlanId String   @map("meal_plan_id") @db.Uuid
+  name       String
+  /// Dias da semana (0=domingo … 6=sábado) aos quais este dia se aplica
+  weekdays   Int[]    @default([])
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  mealPlan MealPlan   @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  meals    PlanMeal[]
+
+  @@index([mealPlanId])
+  @@map("plan_days")
+}
+
+model PlanMeal {
+  id            String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  planDayId     String   @map("plan_day_id") @db.Uuid
+  mealTypeId    String   @map("meal_type_id") @db.Uuid
+  customName    String?  @map("custom_name")
+  scheduledTime String?  @map("scheduled_time")
+  sortOrder     Int      @default(0) @map("sort_order")
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  planDay  PlanDay      @relation(fields: [planDayId], references: [id], onDelete: Cascade)
+  mealType MealType     @relation(fields: [mealTypeId], references: [id])
+  options  MealOption[]
+
+  @@index([planDayId])
+  @@map("plan_meals")
+}
+
+model MealOption {
+  id         String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  planMealId String   @map("plan_meal_id") @db.Uuid
+  name       String
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  planMeal PlanMeal   @relation(fields: [planMealId], references: [id], onDelete: Cascade)
+  items    MealItem[]
+
+  @@index([planMealId])
+  @@map("meal_options")
+}
+
+model MealItem {
+  id                String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  mealOptionId      String   @map("meal_option_id") @db.Uuid
+  /// Exatamente um entre foodId e recipeId (CHECK no banco)
+  foodId            String?  @map("food_id") @db.Uuid
+  recipeId          String?  @map("recipe_id") @db.Uuid
+  quantity          Decimal  @db.Decimal(10, 2)
+  measurementUnitId String?  @map("measurement_unit_id") @db.Uuid
+  foodMeasureId     String?  @map("food_measure_id") @db.Uuid
+  /// Resolvido pelo motor na escrita (Regra do Snapshot §3.3)
+  resolvedGrams     Decimal  @map("resolved_grams") @db.Decimal(10, 2)
+  sortOrder         Int      @default(0) @map("sort_order")
+  notes             String?
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  mealOption      MealOption       @relation(fields: [mealOptionId], references: [id], onDelete: Cascade)
+  food            Food?            @relation(fields: [foodId], references: [id])
+  recipe          Recipe?          @relation(fields: [recipeId], references: [id])
+  measurementUnit MeasurementUnit? @relation(fields: [measurementUnitId], references: [id])
+
+  @@index([mealOptionId])
+  @@index([foodId])
+  @@index([recipeId])
+  @@map("meal_items")
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Apple,
+  ClipboardList,
   CookingPot,
   LayoutDashboard,
   Salad,
@@ -16,6 +17,7 @@ import { messages } from "@/messages/pt-br";
 const navItems = [
   { href: "/dashboard", label: messages.nav.dashboard, icon: LayoutDashboard },
   { href: "/pacientes", label: messages.nav.patients, icon: Users },
+  { href: "/planos", label: messages.nav.planTemplates, icon: ClipboardList },
   { href: "/alimentos", label: messages.nav.foods, icon: Apple },
   { href: "/receitas", label: messages.nav.recipes, icon: CookingPot },
   { href: "/configuracoes", label: messages.nav.settings, icon: Settings },

@@ -25,6 +25,7 @@ import { ageFrom, formatDate } from "@/lib/date";
 import { messages } from "@/messages/pt-br";
 import { PatientFormDialog } from "../patient-form-dialog";
 import { AttachmentsTab } from "./attachments-tab";
+import { PlansTab } from "./plans-tab";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
@@ -137,6 +138,9 @@ export function PatientDetail({ patientId }: { patientId: string }) {
           <TabsTrigger value="overview">
             {messages.patients.tabs.overview}
           </TabsTrigger>
+          <TabsTrigger value="plans">
+            {messages.patients.tabs.plans}
+          </TabsTrigger>
           <TabsTrigger value="attachments">
             {messages.patients.tabs.attachments}
           </TabsTrigger>
@@ -184,6 +188,10 @@ export function PatientDetail({ patientId }: { patientId: string }) {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="plans">
+          <PlansTab patientId={patient.id} />
         </TabsContent>
 
         <TabsContent value="attachments">

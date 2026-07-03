@@ -104,6 +104,9 @@ export const catalogRepo = {
   findMeasurementUnitsByIds(db: Db, ids: string[]) {
     return db.measurementUnit.findMany({ where: { id: { in: ids } } });
   },
+  findNutrientsByIds(db: Db, ids: string[]) {
+    return db.nutrient.findMany({ where: { id: { in: ids } } });
+  },
   listCalculationMethods(db: Db) {
     return db.calculationMethod.findMany({
       orderBy: [{ kind: "asc" }, { sortOrder: "asc" }],

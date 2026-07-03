@@ -83,4 +83,18 @@ export const recipeRepo = {
       data: { isActive: false },
     });
   },
+
+  /** Receitas da clínica com tudo que o cálculo nutricional precisa. */
+  findByIdsForCalc(db: Db, organizationId: string, ids: string[]) {
+    return db.recipe.findMany({
+      where: { id: { in: ids }, organizationId, isActive: true },
+      include: {
+        ingredients: {
+          include: {
+            food: { include: { nutrients: { include: { nutrient: true } } } },
+          },
+        },
+      },
+    });
+  },
 };
