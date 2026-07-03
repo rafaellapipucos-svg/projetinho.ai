@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { publicOrigin } from "@/lib/request-url";
 
 const VALID_TYPES: EmailOtpType[] = [
   "signup",
@@ -27,7 +28,8 @@ function safeNext(raw: string | null): string {
  * o token de código quando presente.
  */
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
+  const origin = publicOrigin(request);
   const next = safeNext(searchParams.get("next"));
   const tokenHash = searchParams.get("token_hash");
   const rawType = searchParams.get("type");
