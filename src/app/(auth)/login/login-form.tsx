@@ -28,12 +28,17 @@ const loginSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+export function LoginForm({ next }: { next?: string }) {
   const router = useRouter();
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+  const target =
+    next && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : "/dashboard";
 
   async function onSubmit(values: LoginValues) {
     const supabase = createClient();
@@ -42,7 +47,7 @@ export function LoginForm() {
       toast.error(authErrorMessage(error));
       return;
     }
-    router.push("/dashboard");
+    router.push(target);
     router.refresh();
   }
 

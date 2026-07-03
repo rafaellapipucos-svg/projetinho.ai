@@ -4,7 +4,11 @@ import { updateSession } from "@/lib/supabase/middleware";
 const PUBLIC_PATHS = new Set(["/login", "/cadastro", "/recuperar-senha"]);
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.has(pathname) || pathname.startsWith("/auth");
+  return (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith("/auth") ||
+    pathname.startsWith("/convite")
+  );
 }
 
 export default async function proxy(request: NextRequest) {

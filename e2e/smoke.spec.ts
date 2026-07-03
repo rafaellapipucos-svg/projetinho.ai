@@ -17,3 +17,16 @@ test("rota protegida sem sessão volta para /login", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/login$/);
 });
+
+test("manifest da PWA responde com nome e ícone", async ({ request }) => {
+  const response = await request.get("/manifest.webmanifest");
+  expect(response.ok()).toBe(true);
+  const manifest = (await response.json()) as {
+    name: string;
+    display: string;
+    icons: Array<{ src: string }>;
+  };
+  expect(manifest.name).toBe(messages.app.name);
+  expect(manifest.display).toBe("standalone");
+  expect(manifest.icons.length).toBeGreaterThan(0);
+});

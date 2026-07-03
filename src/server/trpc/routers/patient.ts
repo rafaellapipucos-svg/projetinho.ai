@@ -40,6 +40,25 @@ export const patientRouter = router({
       patientService.archive(ctx.membership.organizationId, input.id),
     ),
 
+  portalAccess: router({
+    generateInvite: orgProcedure
+      .input(idParam)
+      .mutation(({ ctx, input }) =>
+        patientService.portalAccess.generateInvite(
+          ctx.membership.organizationId,
+          input.id,
+        ),
+      ),
+    revoke: orgProcedure
+      .input(idParam)
+      .mutation(({ ctx, input }) =>
+        patientService.portalAccess.revoke(
+          ctx.membership.organizationId,
+          input.id,
+        ),
+      ),
+  }),
+
   attachments: router({
     list: orgProcedure
       .input(idParam)

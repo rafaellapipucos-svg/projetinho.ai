@@ -69,6 +69,76 @@ export const patientRepo = {
     });
   },
 
+  // ── Portal (convite e vínculo) ─────────────────────────────────────────────
+  findProfilesByUser(db: Db, userId: string) {
+    return db.patient.findMany({
+      where: { userId, deletedAt: null },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        name: true,
+        organizationId: true,
+        organization: { select: { name: true } },
+      },
+    });
+  },
+
+  setInviteToken(db: Db, organizationId: string, id: string, token: string) {
+    return db.patient.updateMany({
+      where: { id, organizationId, deletedAt: null },
+      data: { inviteToken: token },
+    });
+  },
+
+  revokeAccess(db: Db, organizationId: string, id: string) {
+    return db.patient.updateMany({
+      where: { id, organizationId, deletedAt: null },
+      data: { userId: null, inviteToken: null },
+    });
+  },
+
+  findByInviteToken(db: Db, token: string) {
+    return db.patient.findFirst({
+      where: { inviteToken: token, deletedAt: null },
+    });
+  },
+
+  bindUser(db: Db, patientId: string, userId: string) {
+    return db.patient.update({
+      where: { id: patientId },
+      data: { userId, inviteToken: null },
+    });
+  },
+
+  // ── Diário alimentar (portal) ──────────────────────────────────────────────
+  listDiary(db: Db, patientId: string, take: number) {
+    return db.foodDiaryEntry.findMany({
+      where: { patientId },
+      orderBy: { entryAt: "desc" },
+      take,
+      include: { mealType: { select: { name: true } } },
+    });
+  },
+
+  createDiary(
+    db: Db,
+    data: {
+      organizationId: string;
+      patientId: string;
+      entryAt: Date;
+      mealTypeId: string | null;
+      description: string;
+      photoPath: string | null;
+      createdBy: string;
+    },
+  ) {
+    return db.foodDiaryEntry.create({ data });
+  },
+
+  deleteDiary(db: Db, patientId: string, id: string) {
+    return db.foodDiaryEntry.deleteMany({ where: { id, patientId } });
+  },
+
   // ── Anexos ─────────────────────────────────────────────────────────────────
   listAttachments(db: Db, organizationId: string, patientId: string) {
     return db.attachment.findMany({

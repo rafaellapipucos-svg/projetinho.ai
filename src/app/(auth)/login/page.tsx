@@ -16,9 +16,9 @@ export const metadata: Metadata = { title: messages.auth.loginTitle };
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string }>;
+  searchParams: Promise<{ erro?: string; next?: string }>;
 }) {
-  const { erro } = await searchParams;
+  const { erro, next } = await searchParams;
 
   return (
     <Card>
@@ -32,7 +32,7 @@ export default async function LoginPage({
             {messages.auth.linkInvalid}
           </p>
         ) : null}
-        <LoginForm />
+        <LoginForm next={next} />
       </CardContent>
       <CardFooter className="text-muted-foreground justify-center text-sm">
         <span>

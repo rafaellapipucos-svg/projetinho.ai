@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { prisma } from "@/server/db";
 import { userRepo } from "@/server/repositories/user-repo";
 import { organizationRepo } from "@/server/repositories/organization-repo";
+import { patientRepo } from "@/server/repositories/patient-repo";
 
 export interface TenantUser {
   id: string;
@@ -20,9 +21,18 @@ export interface TenantMembership {
   roleName: string;
 }
 
+export interface PatientProfile {
+  patientId: string;
+  patientName: string;
+  organizationId: string;
+  organizationName: string;
+}
+
 export interface TenantContext {
   user: TenantUser;
   membership: TenantMembership | null;
+  /** Prontuários vinculados a esta conta (acesso de paciente ao portal). */
+  patientProfiles: PatientProfile[];
 }
 
 /**
@@ -52,10 +62,10 @@ export const getTenantContext = cache(
       name,
     });
 
-    const membership = await organizationRepo.findFirstMembershipByUser(
-      prisma,
-      user.id,
-    );
+    const [membership, profiles] = await Promise.all([
+      organizationRepo.findFirstMembershipByUser(prisma, user.id),
+      patientRepo.findProfilesByUser(prisma, user.id),
+    ]);
 
     return {
       user: {
@@ -64,6 +74,12 @@ export const getTenantContext = cache(
         name: user.name,
         email: user.email,
       },
+      patientProfiles: profiles.map((profile) => ({
+        patientId: profile.id,
+        patientName: profile.name,
+        organizationId: profile.organizationId,
+        organizationName: profile.organization.name,
+      })),
       membership: membership
         ? {
             organizationId: membership.organizationId,

@@ -78,6 +78,29 @@ export const patientService = {
     if (result.count === 0) throw new NotFoundError(messages.errors.notFound);
   },
 
+  portalAccess: {
+    async generateInvite(organizationId: string, patientId: string) {
+      const token = crypto.randomUUID();
+      const result = await patientRepo.setInviteToken(
+        prisma,
+        organizationId,
+        patientId,
+        token,
+      );
+      if (result.count === 0) throw new NotFoundError(messages.errors.notFound);
+      return { token };
+    },
+
+    async revoke(organizationId: string, patientId: string) {
+      const result = await patientRepo.revokeAccess(
+        prisma,
+        organizationId,
+        patientId,
+      );
+      if (result.count === 0) throw new NotFoundError(messages.errors.notFound);
+    },
+  },
+
   attachments: {
     async list(organizationId: string, patientId: string) {
       const patient = await patientRepo.findByIdForOrg(

@@ -70,3 +70,15 @@ export const orgProcedure = protectedProcedure.use(({ ctx, next }) => {
   }
   return next({ ctx: { ...ctx, membership: ctx.tenant.membership } });
 });
+
+/** Exige vínculo de paciente (portal); tudo restrito ao próprio prontuário. */
+export const patientProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const profile = ctx.tenant.patientProfiles[0];
+  if (!profile) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: messages.portal.noProfile,
+    });
+  }
+  return next({ ctx: { ...ctx, patientProfile: profile } });
+});

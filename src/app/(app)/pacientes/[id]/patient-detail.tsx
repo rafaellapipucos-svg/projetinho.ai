@@ -26,6 +26,7 @@ import { messages } from "@/messages/pt-br";
 import { PatientFormDialog } from "../patient-form-dialog";
 import { AttachmentsTab } from "./attachments-tab";
 import { PlansTab } from "./plans-tab";
+import { PortalAccessCard } from "./portal-access-card";
 
 function Field({ label, value }: { label: string; value: string | null }) {
   return (
@@ -146,7 +147,7 @@ export function PatientDetail({ patientId }: { patientId: string }) {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview">
+        <TabsContent value="overview" className="space-y-4">
           <Card>
             <CardContent className="grid gap-4 pt-6 sm:grid-cols-2 lg:grid-cols-3">
               <Field
@@ -188,6 +189,11 @@ export function PatientDetail({ patientId }: { patientId: string }) {
               </div>
             </CardContent>
           </Card>
+          <PortalAccessCard
+            patientId={patient.id}
+            userId={patient.userId}
+            inviteToken={patient.inviteToken}
+          />
         </TabsContent>
 
         <TabsContent value="plans">

@@ -5,6 +5,7 @@ import { foodRouter } from "@/server/trpc/routers/food";
 import { recipeRouter } from "@/server/trpc/routers/recipe";
 import { patientRouter } from "@/server/trpc/routers/patient";
 import { planRouter } from "@/server/trpc/routers/plan";
+import { portalRouter } from "@/server/trpc/routers/portal";
 
 export const appRouter = router({
   organization: organizationRouter,
@@ -13,6 +14,7 @@ export const appRouter = router({
   recipe: recipeRouter,
   patient: patientRouter,
   plan: planRouter,
+  portal: portalRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -13,7 +13,12 @@ import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = { title: messages.auth.signupTitle };
 
-export default function SignupPage() {
+export default async function SignupPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next } = await searchParams;
   return (
     <Card>
       <CardHeader>
@@ -21,7 +26,7 @@ export default function SignupPage() {
         <CardDescription>{messages.auth.signupSubtitle}</CardDescription>
       </CardHeader>
       <CardContent>
-        <SignupForm />
+        <SignupForm next={next} />
       </CardContent>
       <CardFooter className="text-muted-foreground justify-center text-sm">
         <span>

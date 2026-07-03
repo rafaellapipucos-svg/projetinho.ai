@@ -58,6 +58,7 @@ model Organization {
   patients       Patient[]
   attachments    Attachment[]
   mealPlans      MealPlan[]
+  diaryEntries   FoodDiaryEntry[]
 
   @@map("organizations")
 }
@@ -189,8 +190,9 @@ model MealType {
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization Organization? @relation(fields: [organizationId], references: [id])
+  organization Organization?    @relation(fields: [organizationId], references: [id])
   planMeals    PlanMeal[]
+  diaryEntries FoodDiaryEntry[]
 
   @@unique([organizationId, name])
   @@map("meal_types")
@@ -407,20 +409,44 @@ model Patient {
   notes          String?
   /// LGPD: momento do registro do consentimento de tratamento de dados
   consentAt      DateTime? @map("consent_at") @db.Timestamptz(6)
+  /// Token de convite do portal — trocado pelo vínculo user_id no aceite
+  inviteToken    String?   @unique @map("invite_token")
   deletedAt      DateTime? @map("deleted_at") @db.Timestamptz(6)
   createdBy      String?   @map("created_by") @db.Uuid
   createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  organization Organization @relation(fields: [organizationId], references: [id])
-  assignedTo   User?        @relation("PatientAssignedTo", fields: [assignedToId], references: [id])
-  user         User?        @relation("PatientPortalUser", fields: [userId], references: [id])
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  assignedTo   User?            @relation("PatientAssignedTo", fields: [assignedToId], references: [id])
+  user         User?            @relation("PatientPortalUser", fields: [userId], references: [id])
   mealPlans    MealPlan[]
+  diaryEntries FoodDiaryEntry[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, nameNormalized])
   @@index([assignedToId])
   @@map("patients")
+}
+
+/// Diário alimentar do portal do paciente (Fase 5 — §5.2-F)
+model FoodDiaryEntry {
+  id             String   @id @default(dbgenerated("uuid_generate_v7()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  patientId      String   @map("patient_id") @db.Uuid
+  entryAt        DateTime @map("entry_at") @db.Timestamptz(6)
+  mealTypeId     String?  @map("meal_type_id") @db.Uuid
+  description    String
+  photoPath      String?  @map("photo_path")
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  patient      Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  mealType     MealType?    @relation(fields: [mealTypeId], references: [id])
+
+  @@index([patientId, entryAt])
+  @@map("food_diary_entries")
 }
 
 /// Dono do anexo — polimorfismo controlado (enum: lógica ramifica por tipo)

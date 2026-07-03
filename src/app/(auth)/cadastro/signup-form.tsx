@@ -29,13 +29,18 @@ const signupSchema = z.object({
 
 type SignupValues = z.infer<typeof signupSchema>;
 
-export function SignupForm() {
+export function SignupForm({ next }: { next?: string }) {
   const router = useRouter();
   const [emailSent, setEmailSent] = useState(false);
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: { name: "", email: "", password: "" },
   });
+
+  const target =
+    next && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : "/onboarding";
 
   async function onSubmit(values: SignupValues) {
     const supabase = createClient();
@@ -44,7 +49,7 @@ export function SignupForm() {
       password: values.password,
       options: {
         data: { name: values.name },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/onboarding`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(target)}`,
       },
     });
 
@@ -54,7 +59,7 @@ export function SignupForm() {
     }
 
     if (data.session) {
-      router.push("/onboarding");
+      router.push(target);
       router.refresh();
       return;
     }

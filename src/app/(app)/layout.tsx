@@ -10,7 +10,10 @@ export default async function AppLayout({
 }) {
   const ctx = await getTenantContext();
   if (!ctx) redirect("/login");
-  if (!ctx.membership) redirect("/onboarding");
+  if (!ctx.membership) {
+    // Conta de paciente vai para o portal; sem vínculo algum, cria clínica.
+    redirect(ctx.patientProfiles.length > 0 ? "/portal" : "/onboarding");
+  }
 
   return (
     <div className="flex min-h-screen">

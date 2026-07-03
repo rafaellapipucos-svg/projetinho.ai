@@ -12,6 +12,13 @@ export const planRepo = {
     return db.mealPlan.findFirst({ where: { id, organizationId } });
   },
 
+  findActiveByPatient(db: Db, patientId: string) {
+    return db.mealPlan.findFirst({
+      where: { patientId, status: "active", isTemplate: false },
+      orderBy: { updatedAt: "desc" },
+    });
+  },
+
   loadGraph(db: Db, organizationId: string, id: string) {
     return db.mealPlan.findFirst({
       where: { id, organizationId },

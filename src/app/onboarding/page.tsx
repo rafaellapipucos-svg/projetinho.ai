@@ -18,6 +18,7 @@ export default async function OnboardingPage() {
   const ctx = await getTenantContext();
   if (!ctx) redirect("/login");
   if (ctx.membership) redirect("/dashboard");
+  if (ctx.patientProfiles.length > 0) redirect("/portal");
 
   return (
     <main className="bg-muted/40 flex min-h-screen flex-col items-center justify-center p-4">
