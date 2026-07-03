@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { messages } from "@/messages/pt-br";
+import { GoogleButton, AuthDivider } from "../google-button";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: messages.auth.loginTitle };
@@ -32,6 +33,8 @@ export default async function LoginPage({
             {messages.auth.linkInvalid}
           </p>
         ) : null}
+        <GoogleButton next={next} />
+        <AuthDivider />
         <LoginForm next={next} />
       </CardContent>
       <CardFooter className="text-muted-foreground justify-center text-sm">

@@ -29,6 +29,9 @@ export const messages = {
     hasAccount: "Já tem conta?",
     loginLink: "Entrar",
     forgotPassword: "Esqueceu a senha?",
+    googleButton: "Continuar com Google",
+    orDivider: "ou",
+    oauthError: "Não foi possível iniciar o login com Google.",
     checkEmailTitle: "Confira seu e-mail",
     checkEmailBody:
       "Se o cadastro foi criado, enviamos um link de confirmação para o endereço informado. Abra o link para ativar sua conta.",

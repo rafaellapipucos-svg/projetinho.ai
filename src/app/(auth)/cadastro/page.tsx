@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { messages } from "@/messages/pt-br";
+import { GoogleButton, AuthDivider } from "../google-button";
 import { SignupForm } from "./signup-form";
 
 export const metadata: Metadata = { title: messages.auth.signupTitle };
@@ -25,7 +26,9 @@ export default async function SignupPage({
         <CardTitle>{messages.auth.signupTitle}</CardTitle>
         <CardDescription>{messages.auth.signupSubtitle}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-4">
+        <GoogleButton next={next} />
+        <AuthDivider />
         <SignupForm next={next} />
       </CardContent>
       <CardFooter className="text-muted-foreground justify-center text-sm">
