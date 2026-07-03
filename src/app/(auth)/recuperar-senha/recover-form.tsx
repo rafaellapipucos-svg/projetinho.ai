@@ -34,7 +34,7 @@ export function RecoverForm() {
   async function onSubmit(values: RecoverValues) {
     const supabase = createClient();
     await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/atualizar-senha`,
+      redirectTo: `${window.location.origin}/auth/confirm?next=/atualizar-senha`,
     });
     // Resposta idêntica com ou sem conta: não revela e-mails cadastrados.
     setSent(true);

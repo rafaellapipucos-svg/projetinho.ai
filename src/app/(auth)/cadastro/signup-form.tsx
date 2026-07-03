@@ -49,7 +49,7 @@ export function SignupForm({ next }: { next?: string }) {
       password: values.password,
       options: {
         data: { name: values.name },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(target)}`,
+        emailRedirectTo: `${window.location.origin}/auth/confirm?next=${encodeURIComponent(target)}`,
       },
     });
 
