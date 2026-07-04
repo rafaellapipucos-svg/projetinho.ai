@@ -726,6 +726,7 @@ export const messages = {
     nameMax80: "O nome deve ter no máximo 80 caracteres.",
     timeInvalid: "Informe um horário válido (HH:MM).",
     numberInvalid: "Informe um número válido.",
+    descriptionMin2: "Informe uma descrição com pelo menos 2 caracteres.",
   },
   errors: {
     unauthorized: "Sessão expirada. Entre novamente.",

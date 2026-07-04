@@ -91,6 +91,10 @@ export function PaymentDialog({
       toast.error(messages.validation.required);
       return;
     }
+    if (description.trim().length < 2) {
+      toast.error(messages.validation.descriptionMin2);
+      return;
+    }
     const amountReais = Number(amount.replace(",", "."));
     if (!Number.isFinite(amountReais) || amountReais < 0) {
       toast.error(messages.validation.numberInvalid);
