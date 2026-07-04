@@ -73,7 +73,9 @@ export function PlanBuilder({ planId }: { planId: string }) {
   // useShallow: sem ele, o `?? []` devolve um array novo a cada render quando
   // o dia ainda não carregou, disparando loop infinito no useSyncExternalStore.
   const mealIds = useBuilder(
-    useShallow((state) => state.mealOrderByDay[state.selectedDayId ?? ""] ?? []),
+    useShallow(
+      (state) => state.mealOrderByDay[state.selectedDayId ?? ""] ?? [],
+    ),
   );
   const load = useBuilder((state) => state.load);
   const addMeal = useBuilder((state) => state.addMeal);
