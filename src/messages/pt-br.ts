@@ -43,6 +43,12 @@ export const messages = {
     emailNotConfirmed:
       "Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.",
     linkInvalid: "O link de acesso é inválido ou expirou. Tente novamente.",
+    emailRateLimited:
+      "Muitos e-mails enviados em pouco tempo. Aguarde alguns minutos e tente de novo, ou configure um SMTP próprio no Supabase.",
+    userAlreadyExists:
+      "Já existe uma conta com este e-mail. Faça login em vez de criar uma nova conta.",
+    weakPassword: "Senha muito fraca. Use pelo menos 8 caracteres.",
+    signupDisabled: "O cadastro por e-mail está desativado no momento.",
     genericError:
       "Não foi possível completar a ação. Tente novamente em instantes.",
     signOut: "Sair",
