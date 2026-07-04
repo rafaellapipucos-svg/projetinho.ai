@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useShallow } from "zustand/react/shallow";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -69,8 +70,10 @@ export function PlanBuilder({ planId }: { planId: string }) {
   const saveState = useBuilder((state) => state.saveState);
   const queueLength = useBuilder((state) => state.queue.length);
   const selectedDayId = useBuilder((state) => state.selectedDayId);
+  // useShallow: sem ele, o `?? []` devolve um array novo a cada render quando
+  // o dia ainda não carregou, disparando loop infinito no useSyncExternalStore.
   const mealIds = useBuilder(
-    (state) => state.mealOrderByDay[state.selectedDayId ?? ""] ?? [],
+    useShallow((state) => state.mealOrderByDay[state.selectedDayId ?? ""] ?? []),
   );
   const load = useBuilder((state) => state.load);
   const addMeal = useBuilder((state) => state.addMeal);
